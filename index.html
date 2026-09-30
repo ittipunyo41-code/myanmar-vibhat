@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pali-Myanmar Grammar Analyzer (Advanced Tokenizer)</title>
+    <title>Pali-Myanmar Grammar Analyzer (Pali Virama Fixed)</title>
     <style>
         * { box-sizing: border-box; }
         body { 
@@ -102,6 +102,7 @@
         .cat-honor { background-color: #e9d5ff; color: #6b21a8; }    /* ม่วง */
         .cat-nipata { background-color: #ffedd5; color: #9a3412; }   /* ส้ม */
         .cat-adjective { background-color: #fbcfe8; color: #9d174d; } /* ชมพู */
+        .cat-number { background-color: #fed7aa; color: #c2410c; }    /* ส้มอิฐ - สังขยา/ตัวเลข */
         .cat-ambiguous { background-color: #e2e8f0; color: #334155; } /* เทา */
         
         /* แถวที่เลือกในตาราง */
@@ -126,19 +127,20 @@
 <body>
 
 <div class="container">
-    <h2>ระบบวิเคราะห์ไวยากรณ์บาลี-พม่า (Advanced Tokenizer Engine)</h2>
+    <h2>ระบบวิเคราะห์ไวยากรณ์บาลี-พม่า (Pali Virama Support)</h2>
     
     <div class="legend">
+        <span class="cat-number">สังขยา/ตัวเลข (Ordinals)</span>
         <span class="cat-vibhatti">วิภัตตินาม</span>
-        <span class="cat-akhyata">อาขยาต</span>
+        <span class="cat-akhyata">อาขยาต/ธาตุ</span>
         <span class="cat-kit">กิริยากิตก์</span>
         <span class="cat-honor">ราชาศัพท์</span>
         <span class="cat-nipata">นิบาต/คำเชื่อม</span>
         <span class="cat-adjective">คุณนาม/สัพพนาม</span>
-        <span class="cat-ambiguous">คำพ้องรูป (ดูบริบท)</span>
+        <span class="cat-ambiguous">คำพ้องรูป</span>
     </div>
 
-    <input type="text" id="myanmarInput" placeholder="พิมพ์หรือวางประโยคบาลี-พม่า..." value="သံသီးချင်း နတ်လူတို့၏ အလုံးစုံသော တရားတို့ကို ကိုယ်တိုင် မှန်ကန်စွာ သိတော်မူသော အကြောင်းကြောင့်လည်း 'သမ္မာသမ္ဗုဒ္ဓ' မည်တော်မူ၏။">
+    <input type="text" id="myanmarInput" placeholder="พิมพ์หรือวางประโยคบาลี-พม่า..." value="ပဉ္စမသုတ်သည် နတ်လူတို့၏ အလုံးစုံသော တရားတို့ကို ကိုယ်တိုင် မှန်ကန်စွာ သိတော်မူ၏။">
     
     <div class="input-preview" id="previewArea"></div>
 
@@ -147,8 +149,8 @@
         <table>
             <thead>
                 <tr>
-                    <th width="20%">คำ (พม่า)</th>
-                    <th width="25%">หมวดหมู่</th>
+                    <th width="22%">คำ (พม่า)</th>
+                    <th width="23%">หมวดหมู่</th>
                     <th width="55%">เทียบเคียงบาลี & คำแปลไทย</th>
                 </tr>
             </thead>
@@ -160,6 +162,7 @@
 </div>
 
 <script>
+// ฐานข้อมูล JSON ไวยากรณ์บาลี-พม่า-ไทย (รวมหมวดสังขยา/ตัวเลขบาลี)
 // ฐานข้อมูล JSON ไวยากรณ์บาลี-พม่า-ไทย (Nissaya Standard)
 const rawJSONData =[
   {
@@ -1653,22 +1656,1908 @@ const rawJSONData =[
     "pali_equivalent": "โปตฺถก",
     "thai_meaning": "หนังสือ, คัมภีร์",
     "is_ambiguous": false
+  },
+  {
+    "word": "ပြု",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "กโรติ",
+    "thai_meaning": "ย่อมกระทำ, ย่อมทำ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လုပ်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "กโรติ",
+    "thai_meaning": "ย่อมทำ, ย่อมประกอบ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အားထုတ်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "วายမติ / ပဒဟတိ",
+    "thai_meaning": "ย่อมพยายาม, ย่อมปรารภความเพียร",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဖြစ်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဘဝတိ / ဟောတိ / ဥပ္ပဇ္ဇတိ",
+    "thai_meaning": "ย่อมเป็น, ย่อมมี, ย่อมบังเกิด",
+    "is_ambiguous": true
+  },
+  {
+    "word": "ရှိ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "အတ္ထိ / ဝိဇ္ဇတိ",
+    "thai_meaning": "ย่อมมี, ย่อมมีอยู่",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပျက်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "နဿတိ / ဝိနဿတိ",
+    "thai_meaning": "ย่อมพินาศ, ย่อมฉิบหาย",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သေ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "မရတိ / ကာလံ ကရောတိ",
+    "thai_meaning": "ย่อมตาย, ย่อมทำกาละ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရှင်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဇီဝတိ",
+    "thai_meaning": "ย่อมเป็นอยู่, ย่อมดำรงชีวิต",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သွား",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဂစ္ဆတိ",
+    "thai_meaning": "ย่อมไป",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လာ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "အာဂစ္ဆတိ",
+    "thai_meaning": "ย่อมมา",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရောက်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ပါပုဏာတိ / ပတ္တ",
+    "thai_meaning": "ย่อมถึง, ย่อมบรรลุ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဝင်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ပဝိသတိ",
+    "thai_meaning": "ย่อมเข้า, ย่อมเข้าไป",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ထွက်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "နိက္ခမတိ",
+    "thai_meaning": "ย่อมออก, ย่อมออกไป",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တက်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "အာရုဟတိ / ဥဂ္ဂစ္ဆတိ",
+    "thai_meaning": "ย่อมขึ้น, ย่อมขึ้นไป",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဆင်း",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဩတရတိ",
+    "thai_meaning": "ย่อมลง, ย่อมลงไป",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပြန်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "နိဝတ္တတိ / ပဋိနိဝတ္တတိ",
+    "thai_meaning": "ย่อมกลับ, ย่อมกลับคืน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လှည့်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ပရိဝတ္တတိ",
+    "thai_meaning": "ย่อมหมุน, ย่อมเวียนกลับ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လိုက်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "အနုဂစ္ဆတိ / အနုဗန္ဓတိ",
+    "thai_meaning": "ย่อมตามไป, ย่อมติดตาม",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပြေး",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဓာဝတိ / ပလာယတိ",
+    "thai_meaning": "ย่อมวิ่ง, ย่อมหนี",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ခေါ်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ပက္ကောသတိ / အာမန္တေတိ",
+    "thai_meaning": "ย่อมร้องเรียก, ย่อมเรียกมา",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဆို",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဝဒတိ / ဘဏတိ",
+    "thai_meaning": "ย่อมกล่าว, ย่อมบอก",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပြော",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ကထေတိ",
+    "thai_meaning": "ย่อมกล่าว, ย่อมบอกเล่า",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဟော",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဒေသေတိ",
+    "thai_meaning": "ย่อมแสดง (ธรรม), ย่อมเทศน์",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မြွက်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဗျာကရောတိ / ဝေါဟရတိ",
+    "thai_meaning": "ย่อมเปล่ง (วาจา), ย่อมพยากรณ์",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရွတ်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "သဇ္ဈာယတိ",
+    "thai_meaning": "ย่อมสาธยาย, ย่อมสวด",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဖတ်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဝါစေတိ",
+    "thai_meaning": "ย่อมอ่าน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သင်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "သိက္ခတိ / ဥဂ္ဂဏှာတိ",
+    "thai_meaning": "ย่อมศึกษา, ย่อมเรียนเอา",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကြား",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "သုဏာတိ",
+    "thai_meaning": "ย่อมฟัง, ย่อมได้ยิน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "နာ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "သုဏာတိ / သဝန",
+    "thai_meaning": "ย่อมสดับ, ย่อมฟัง (ธรรม)",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သိ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဇာနာတိ / အဝဂစ္ဆတိ",
+    "thai_meaning": "ย่อมรู้, ย่อมทราบ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မြင်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ပဿတိ / ဒဿန",
+    "thai_meaning": "ย่อมเห็น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကြည့်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဩလောကေတိ",
+    "thai_meaning": "ย่อมแลดู, ย่อมตรวจดู",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရှု",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ပေက္ခတိ / ဝိပဿတိ",
+    "thai_meaning": "ย่อมเพ่งดู, ย่อมพิจารณาเห็น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဖူး",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဒဿန (ပူဇာဝသေန)",
+    "thai_meaning": "ย่อมเฝ้า (พระพุทธเจ้า), ย่อมเห็นโดยความเคารพ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တွေ့",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "လဘတိ / ပဿတိ / သမာဂစ္ဆတိ",
+    "thai_meaning": "ย่อมพบ, ย่อมประสบ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရှာ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဂဝေသတိ / ပရိယေသတိ",
+    "thai_meaning": "ย่อมแสวงหา",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကြံ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "စိန္တေတိ",
+    "thai_meaning": "ย่อมคิด, ย่อมดำริ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တွေး",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဝိတက္ကေတိ",
+    "thai_meaning": "ย่อมตรึก, ย่อมคิด",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အောက်မေ့",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "အနုဿရတိ / သရတိ",
+    "thai_meaning": "ย่อมระลึกถึง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မှတ်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "သလ္လက္ခေတိ / ဥပဓာရေတိ",
+    "thai_meaning": "ย่อมกำหนด, ย่อมจำไว้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ထင်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "မညတိ",
+    "thai_meaning": "ย่อมสำคัญ (ว่า)",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ယုံ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "သဒ္ဒဟတိ",
+    "thai_meaning": "ย่อมเชื่อ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကြည်ညို",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ပသီဒတိ",
+    "thai_meaning": "ย่อมเลื่อมใส",
+    "is_ambiguous": false
+  },
+  {
+    "word": "နှစ်သက်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "နန္ဒတိ / တုဿတိ",
+    "thai_meaning": "ย่อมยินดี, ย่อมเพลิดเพลิน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဝမ်းမြောက်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "မောဒတိ / အဘိနန္ဒတိ",
+    "thai_meaning": "ย่อมอนุโมทนา, ย่อมชื่นชม",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ငို",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ရောဒတိ",
+    "thai_meaning": "ย่อมร้องไห้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပူဆွေး",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "သောစတိ / ပရိဒေဝတိ",
+    "thai_meaning": "ย่อมเศร้าโศก, ย่อมปริเทวะ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ချစ်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ပိယာယတိ / သ္နေဟတိ",
+    "thai_meaning": "ย่อมรัก, ย่อมสิเนหา",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မုန်း",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဒုဿတိ / အပ္ပိယာယတိ",
+    "thai_meaning": "ย่อมเกลียดชัง, ย่อมประทุษร้าย",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ငြင်း",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ပဋိက္ခိပတိ / ဝိဝဒတိ",
+    "thai_meaning": "ย่อมปฏิเสธ, ย่อมวิวาท",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဆဲ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "အက္ကောသတိ",
+    "thai_meaning": "ย่อมด่า",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရိုက်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ပဟရတိ",
+    "thai_meaning": "ย่อมประหาร, ย่อมตี",
+    "is_ambiguous": false
+  },
+  {
+    "word": "နှက်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "တာဠေတိ",
+    "thai_meaning": "ย่อมโบย, ย่อมทุบ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဖြတ်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဆိန္ဒတိ",
+    "thai_meaning": "ย่อมตัด",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ခွဲ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဘိန္ဒတိ / ဝိဘဇတိ",
+    "thai_meaning": "ย่อมทำลาย, ย่อมจำแนก",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပေါင်း",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "သမာဂစ္ဆတိ / သံယုဇ္ဇတိ",
+    "thai_meaning": "ย่อมสมาคม, ย่อมประกอบพร้อม",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဝေ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဘာဇေတိ / ဝိဘဇတိ",
+    "thai_meaning": "ย่อมแบ่ง, ย่อมแจก",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပေး",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဒေတိ / ဒဒါတိ",
+    "thai_meaning": "ย่อมให้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လှူ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဒေတိ (ဒါနဝသေန)",
+    "thai_meaning": "ย่อมถวาย, ย่อมบริจาค",
+    "is_ambiguous": false
+  },
+  {
+    "word": "စွန့်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "စဇတိ / ပရိစ္စဇတိ",
+    "thai_meaning": "ย่อมสละ, ย่อมละทิ้ง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကပ်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဥပသင်္ကမတိ / ဥပနာမေတိ",
+    "thai_meaning": "ย่อมเข้าไปหา, ย่อมน้อมเข้าไป",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဆက်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဃဋေတိ / ဥပနာမေတိ",
+    "thai_meaning": "ย่อมสืบต่อ, ย่อมถวาย (ราชาศัพท์)",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ယူ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဂဏှာတိ / အာဒိယတိ",
+    "thai_meaning": "ย่อมถือเอา, ย่อมรับเอา",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကိုင်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဓာရေတိ / ဂဏှာတိ",
+    "thai_meaning": "ย่อมจับ, ย่อมทรงไว้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဆွဲ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "အာကဍ္ဎတိ / ကဍ္ဎတိ",
+    "thai_meaning": "ย่อมคร่ามา, ย่อมดึง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တောင်း",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ယာစတိ",
+    "thai_meaning": "ย่อมขอ, ย่อมวิงวอน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မေး",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ပုစ္ဆတိ",
+    "thai_meaning": "ย่อมถาม",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဖြေ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဝိသဇ္ဇေတိ / ဗျာကရောတိ",
+    "thai_meaning": "ย่อมแก้, ย่อมพยากรณ์",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဆုံးမ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဩဝဒတိ / အနုသာသတိ",
+    "thai_meaning": "ย่อมโอวาท, ย่อมพร่ำสอน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပြ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဒဿေတိ",
+    "thai_meaning": "ย่อมแสดง, ย่อมชี้แจง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ညွှန်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဒိသတိ / ဥပဒိသတိ",
+    "thai_meaning": "ย่อมชี้บอก, ย่อมแสดง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဆောင်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဟရတိ / နေတိ",
+    "thai_meaning": "ย่อมนำไป, ย่อมนำมา",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရွက်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဥဗ္ဗဟတိ / ဓာရေတိ",
+    "thai_meaning": "ย่อมทูน, ย่อมเทิดทูน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ထမ်း",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဘာရံ ဝဟတိ",
+    "thai_meaning": "ย่อมแบก, ย่อมรับภาระ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ချ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "နိက္ခိပတိ / ဩတာရေတိ",
+    "thai_meaning": "ย่อมวางลง, ย่อมปลงลง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ထား",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဌပေတိ / ဝိဒဟတိ",
+    "thai_meaning": "ย่อมวางไว้, ย่อมตั้งไว้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဖုံး",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဆာဒေတိ / ပဋိစ္ဆာဒေတိ",
+    "thai_meaning": "ย่อมปิด, ย่อมปกปิด",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဖွင့်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဝိဝရတိ",
+    "thai_meaning": "ย่อมเปิด, ย่อมเปิดเผย",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ခင်း",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ပတ္ထရတိ / ပညာပေတိ",
+    "thai_meaning": "ย่อมปู, ย่อมลาด",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရစ်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဝေဌေတိ / ပရိဝေဌေတိ",
+    "thai_meaning": "ย่อมพัน, ย่อมรัด",
+    "is_ambiguous": false
+  },
+  {
+    "word": "နှောင်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဗန္ဓတိ",
+    "thai_meaning": "ย่อมผูก, ย่อมจองจำ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဖြေ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "မောစေတိ (ဗန္ဓနာ)",
+    "thai_meaning": "ย่อมแก้ (เครื่องผูก), ย่อมเปลื้อง",
+    "is_ambiguous": true
+  },
+  {
+    "word": "လောင်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဍဟတိ / ဈာယတိ",
+    "thai_meaning": "ย่อมไหม้, ย่อมเผา",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ချက်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ပစတိ",
+    "thai_meaning": "ย่อมหุง, ย่อมต้ม",
+    "is_ambiguous": false
+  },
+  {
+    "word": "စား",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဘုဉ္ဇတိ / ခါဒတိ",
+    "thai_meaning": "ย่อมกิน, ย่อมเคี้ยว",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သောက်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ပိဝတိ",
+    "thai_meaning": "ย่อมดื่ม",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မျို",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဂိလတိ / အဇ္ဈောဟရတိ",
+    "thai_meaning": "ย่อมกลืน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "စီး",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "သန္ဒတိ / ပဝဟတိ",
+    "thai_meaning": "ย่อมไหล, ย่อมหลั่ง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပွင့်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဝိကသတိ",
+    "thai_meaning": "ย่อมบาน, ย่อมเบ่งบาน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ညှိုး",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "မိလာယတိ",
+    "thai_meaning": "ย่อมเหี่ยวแห้ง, ย่อมหม่นหมอง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကျ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ပတတိ / နိပတတိ",
+    "thai_meaning": "ย่อมตก, ย่อมตกลงมา",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကြွေ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ပတတိ / ခရတိ",
+    "thai_meaning": "ย่อมร่วง, ย่อมหล่น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "နစ်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "နိမဇ္ဇတိ / ဩသီဒတိ",
+    "thai_meaning": "ย่อมจมลง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကူး",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "တရတိ / တရဏ",
+    "thai_meaning": "ย่อมข้าม, ย่อมข้ามก้าวล่วง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပျံ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဥဍ္ဍေတိ / ဥပ္ပတတိ",
+    "thai_meaning": "ย่อมบิน, ย่อมเหาะไป",
+    "is_ambiguous": false
+  },
+  {
+    "word": "နေ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဝသတိ / ဝိဟရတိ",
+    "thai_meaning": "ย่อมอยู่, ย่อมสำเร็จการอยู่",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ထိုင်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "နိသီဒတိ",
+    "thai_meaning": "ย่อมนั่ง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရပ်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "တိဋ္ဌတိ",
+    "thai_meaning": "ย่อมยืน, ย่อมตั้งอยู่",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လျောင်း",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "သယတိ / သေတိ",
+    "thai_meaning": "ย่อมนอน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အိပ်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "သုပတိ / နိဒ္ဒာယတိ",
+    "thai_meaning": "ย่อมหลับ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "နိုး",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ပဗုဇ္ဈတိ / ဇာဂရတိ",
+    "thai_meaning": "ย่อมตื่น, ย่อมตื่นขึ้น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ထ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဥဋ္ဌဟတိ / ဝုဋ္ဌာတိ",
+    "thai_meaning": "ย่อมลุกขึ้น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကျင့်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "စရတိ / အာစရတိ / ပဋိပဇ္ဇတိ",
+    "thai_meaning": "ย่อมประพฤติ, ย่อมปฏิบัติ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "စောင့်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ရက္ခတိ / ပါလေတိ",
+    "thai_meaning": "ย่อมรักษา, ย่อมคุ้มครอง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တား",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "နိဝါရေတိ / နိသေဓေတိ",
+    "thai_meaning": "ย่อมห้าม",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပယ်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ပဇဟတိ",
+    "thai_meaning": "ย่อมละ, ย่อมละทิ้ง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရှောင်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ပရိဝဇ္ဇေတိ / ဝိရမတိ",
+    "thai_meaning": "ย่อมเว้น, ย่อมงดเว้น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကင်း",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဝိဂစ္ဆတိ / ဝိရဟိတ",
+    "thai_meaning": "ย่อมปราศจาก, ย่อมเว้นขาด",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လွတ်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "မုစ္စတိ / ဝိမုစ္စတိ",
+    "thai_meaning": "ย่อมพ้น, ย่อมหลุดพ้น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကယ်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "တာရေတိ / ဥဒ္ဓရတိ",
+    "thai_meaning": "ย่อมช่วย, ย่อมข้ามพ้น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မစ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "အနုဂ္ဂဏှာတိ / သင်္ဂဏှာတိ",
+    "thai_meaning": "ย่อมสงเคราะห์, ย่อมอนุเคราะห์",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ညီ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "သမ / သမဂ္ဂ",
+    "thai_meaning": "ย่อมสม่ำเสมอ, ย่อมพร้อมเพรียง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပေါင်းသင်း",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "သေဝတိ / သံသေဝတိ",
+    "thai_meaning": "ย่อมคบหา, ย่อมสมาคม",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မှီဝဲ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဥပသေဝတိ",
+    "thai_meaning": "ย่อมซ่องเสพ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဆည်းကပ်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဥပသင်္ကမတိ / ဥပါသတိ",
+    "thai_meaning": "ย่อมเข้าไปนั่งใกล้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရိုသေ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဂါရဝံ ကရောတိ / နမဿတိ",
+    "thai_meaning": "ย่อมเคารพ, ย่อมนอบน้อม",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပူဇော်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ပူဇေတိ",
+    "thai_meaning": "ย่อมบูชา",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရှိခိုး",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဝန္ဒတိ / နမဿတိ",
+    "thai_meaning": "ย่อมไหว้, ย่อมนมัสการ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သီးခံ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ခမတိ / အဓိဝါသေတိ",
+    "thai_meaning": "ย่อมอดทน, ย่อมกลั้น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရောင့်ရဲ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "သန္တုဿတိ",
+    "thai_meaning": "ย่อมสันโดษ, ย่อมพอใจ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မွေ့လျော်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "အဘိရမတိ / ရမတိ",
+    "thai_meaning": "ย่อมยินดียิ่ง, ย่อมรื่นรมย์",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ငြီးငွေ့",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "နိဗ္ဗိန္ဒတိ",
+    "thai_meaning": "ย่อมเบื่อหน่าย",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရွံရှာ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဇိဂုစ္ဆတိ / ဥဋ္ဋိယတိ",
+    "thai_meaning": "ย่อมเกลียดชัง, ย่อมรังเกียจ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တုန်လှုပ်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ကမ္ပတိ / ဖန္ဒတိ",
+    "thai_meaning": "ย่อมหวั่นไหว",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ထိတ်လန့်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "တဿတိ / ဥတ္တသတိ",
+    "thai_meaning": "ย่อมสะดุ้ง, ย่อมหวาดกลัว",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကြောက်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဘာယတိ / ဘာယန",
+    "thai_meaning": "ย่อมกลัว",
+    "is_ambiguous": false
+  },
+  {
+    "word": "စွမ်း",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "သက္ကောတိ",
+    "thai_meaning": "ย่อมอาจ, ย่อมสามารถ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အောင်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဇိနာတိ / ဇယတိ",
+    "thai_meaning": "ย่อมชนะ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရှုံး",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ပရာဇေတိ / ပရာဇယ",
+    "thai_meaning": "ย่อมแพ้, ย่อมพ่ายแพ้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရေတွက်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ဂဏေတိ / သင်္ခေတိ",
+    "thai_meaning": "ย่อมนับ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "စဉ်းစား",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "စိန္တေတိ / ဝိစာရေတိ",
+    "thai_meaning": "ย่อมพิจารณา, ย่อมตริตรอง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပိုင်းခြား",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "ပရိစ္ဆိန္ဒတိ",
+    "thai_meaning": "ย่อมกำหนด, ย่อมตัดขาด",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဆုံးဖြတ်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "တိရေတိ / ဝိနိစ္ဆယတိ",
+    "thai_meaning": "ย่อมตัดสิน, ย่อมวินิจฉัย",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အပ်",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "နိယျာတေတိ",
+    "thai_meaning": "ย่อมมอบให้, ย่อมมอบหมาย",
+    "is_ambiguous": true
+  },
+  {
+    "word": "မှီ",
+    "category": "กิริยา (อาขยาต/กิตก์)",
+    "pali_equivalent": "နိဿယတိ",
+    "thai_meaning": "ย่อมอิง, ย่อมอิงอาศัย",
+    "is_ambiguous": false
+  },
+  
+  {
+    "word": "ပြု",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ကရောတိ",
+    "thai_meaning": "กระทำ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လုပ်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ကရောတိ",
+    "thai_meaning": "ทำ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အားထုတ်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဝါယမတိ",
+    "thai_meaning": "พยายาม",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဖြစ်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဟောတိ",
+    "thai_meaning": "เป็น, มี",
+    "is_ambiguous": true
+  },
+  {
+    "word": "ရှိ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "အတ္ထိ",
+    "thai_meaning": "มี",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပျက်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "နဿတိ",
+    "thai_meaning": "พินาศ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သေ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "မရတိ",
+    "thai_meaning": "ตาย",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရှင်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဇီဝတိ",
+    "thai_meaning": "เป็นอยู่",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သွား",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဂစ္ဆတိ",
+    "thai_meaning": "ไป",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လာ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "အာဂစ္ဆတိ",
+    "thai_meaning": "มา",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရောက်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ပါပုဏာတိ",
+    "thai_meaning": "ถึง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဝင်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ပဝိသတိ",
+    "thai_meaning": "เข้า",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ထွက်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "နိက္ခမတိ",
+    "thai_meaning": "ออก",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တက်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "အာရုဟတိ",
+    "thai_meaning": "ขึ้น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဆင်း",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဩတရတိ",
+    "thai_meaning": "ลง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပြန်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "နိဝတ္တတိ",
+    "thai_meaning": "กลับ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လှည့်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ပရိဝတ္တတိ",
+    "thai_meaning": "หมุน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လိုက်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "အနုဂစ္ဆတိ",
+    "thai_meaning": "ตาม",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပြေး",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဓာဝတိ",
+    "thai_meaning": "วิ่ง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ခေါ်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ပက္ကောသတိ",
+    "thai_meaning": "เรียก",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဆို",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဝဒတိ",
+    "thai_meaning": "กล่าว",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပြော",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ကထေတိ",
+    "thai_meaning": "บอก",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဟော",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဒေသေတိ",
+    "thai_meaning": "แสดง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မြွက်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဗျာကရောတိ",
+    "thai_meaning": "เปล่ง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရွတ်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "သဇ္ဈာယတိ",
+    "thai_meaning": "สาธยาย",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဖတ်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဝါစေတိ",
+    "thai_meaning": "อ่าน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သင်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဥဂ္ဂဏှာတိ",
+    "thai_meaning": "เรียน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကြား",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "သုဏာတိ",
+    "thai_meaning": "ฟัง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "နာ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "သုဏာတိ",
+    "thai_meaning": "สดับ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သိ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဇာနာတိ",
+    "thai_meaning": "รู้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မြင်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ပဿတိ",
+    "thai_meaning": "เห็น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကြည့်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဩလောကေတိ",
+    "thai_meaning": "แลดู",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရှု",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဝိပဿတိ",
+    "thai_meaning": "พิจารณา",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဖူး",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဒဿန",
+    "thai_meaning": "เฝ้า",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တွေ့",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "လဘတိ",
+    "thai_meaning": "พบ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရှာ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဂဝေသတိ",
+    "thai_meaning": "แสวงหา",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကြံ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "စိန္တေတိ",
+    "thai_meaning": "คิด",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တွေး",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဝိတက္ကေတိ",
+    "thai_meaning": "ตรึก",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အောက်မေ့",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "သရတိ",
+    "thai_meaning": "ระลึก",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မှတ်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဥပဓာရေတိ",
+    "thai_meaning": "กำหนด",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ထင်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "မညတိ",
+    "thai_meaning": "สำคัญ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ယုံ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "သဒ္ဒဟတိ",
+    "thai_meaning": "เชื่อ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကြည်ညို",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ပသီဒတိ",
+    "thai_meaning": "เลื่อมใส",
+    "is_ambiguous": false
+  },
+  {
+    "word": "နှစ်သက်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "တုဿတိ",
+    "thai_meaning": "ยินดี",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဝမ်းမြောက်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "မောဒတိ",
+    "thai_meaning": "ชื่นชม",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ငို",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ရောဒတိ",
+    "thai_meaning": "ร้องไห้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပူဆွေး",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "သောစတိ",
+    "thai_meaning": "เศร้าโศก",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ချစ်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ပိယာယတိ",
+    "thai_meaning": "รัก",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မုန်း",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဒုဿတိ",
+    "thai_meaning": "เกลียด",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ငြင်း",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ပဋိက္ခိပတိ",
+    "thai_meaning": "ปฏิเสธ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဆဲ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "အက္ကောသတိ",
+    "thai_meaning": "ด่า",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရိုက်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ပဟရတိ",
+    "thai_meaning": "ตี",
+    "is_ambiguous": false
+  },
+  {
+    "word": "နှက်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "တာဠေတိ",
+    "thai_meaning": "โบย",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဖြတ်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဆိန္ဒတိ",
+    "thai_meaning": "ตัด",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ခွဲ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဘိန္ဒတိ",
+    "thai_meaning": "ทำลาย",
+    "is_ambiguous": true
+  },
+  {
+    "word": "ပေါင်း",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "သံယုဇ္ဇတိ",
+    "thai_meaning": "ประกอบ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဝေ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဝိဘဇတိ",
+    "thai_meaning": "แจก",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပေး",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဒေတိ",
+    "thai_meaning": "ให้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လှူ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဒါန",
+    "thai_meaning": "ถวาย",
+    "is_ambiguous": false
+  },
+  {
+    "word": "စွန့်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "စဇတိ",
+    "thai_meaning": "สละ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကပ်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဥပသင်္ကမတိ",
+    "thai_meaning": "เข้าไปหา",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဆက်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဥပနာမေတိ",
+    "thai_meaning": "น้อมไป",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ယူ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဂဏှာတိ",
+    "thai_meaning": "ถือเอา",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကိုင်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဓာရေတိ",
+    "thai_meaning": "ทรง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဆွဲ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ကဍ္ဎတိ",
+    "thai_meaning": "ดึง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တောင်း",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ယာစတိ",
+    "thai_meaning": "ขอ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မေး",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ပုစ္ဆတိ",
+    "thai_meaning": "ถาม",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဖြေ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဝိသဇ္ဇေတိ",
+    "thai_meaning": "แก้",
+    "is_ambiguous": true
+  },
+  {
+    "word": "ဆုံးမ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဩဝဒတိ",
+    "thai_meaning": "สอน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပြ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဒဿေတိ",
+    "thai_meaning": "แสดง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ညွှန်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဥပဒိသတိ",
+    "thai_meaning": "ชี้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဆောင်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဟရတိ",
+    "thai_meaning": "นำ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရွက်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဥဗ္ဗဟတိ",
+    "thai_meaning": "ทูน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ထမ်း",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဝဟတိ",
+    "thai_meaning": "แบก",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ချ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "နိက္ခိပတိ",
+    "thai_meaning": "วาง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ထား",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဌပေတိ",
+    "thai_meaning": "ตั้ง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဖုံး",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဆာဒေတိ",
+    "thai_meaning": "ปิด",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဖွင့်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဝိဝရတိ",
+    "thai_meaning": "เปิด",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ခင်း",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ပတ္ထရတိ",
+    "thai_meaning": "ปู",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရစ်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဝေဌေတိ",
+    "thai_meaning": "พัน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "နှောင်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဗန္ဓတိ",
+    "thai_meaning": "ผูก",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လောင်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဍဟတိ",
+    "thai_meaning": "ไหม้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ချက်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ပစတိ",
+    "thai_meaning": "หุง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "စား",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဘုဉ္ဇတိ",
+    "thai_meaning": "กิน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သောက်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ပိဝတိ",
+    "thai_meaning": "ดื่ม",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မျို",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဂိလတိ",
+    "thai_meaning": "กลืน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "စီး",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "သန္ဒတိ",
+    "thai_meaning": "ไหล",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပွင့်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဝိကသတိ",
+    "thai_meaning": "บาน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ညှိုး",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "မိလာယတိ",
+    "thai_meaning": "เหี่ยว",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကျ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ပတတိ",
+    "thai_meaning": "ตก",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကြွေ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "နိပတတိ",
+    "thai_meaning": "ร่วง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "နစ်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "နိမဇ္ဇတိ",
+    "thai_meaning": "จม",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကူး",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "တရတိ",
+    "thai_meaning": "ข้าม",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပျံ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဥဍ္ဍေတိ",
+    "thai_meaning": "บิน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "နေ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဝသတိ",
+    "thai_meaning": "อยู่",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ထိုင်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "နိသီဒတိ",
+    "thai_meaning": "นั่ง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရပ်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "တိဋ္ဌတိ",
+    "thai_meaning": "ยืน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လျောင်း",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "သေတိ",
+    "thai_meaning": "นอน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အိပ်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "သုပတိ",
+    "thai_meaning": "หลับ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "နိုး",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ပဗုဇ္ဈတိ",
+    "thai_meaning": "ตื่น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ထ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဥဋ္ဌဟတိ",
+    "thai_meaning": "ลุก",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကျင့်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "စရတိ",
+    "thai_meaning": "ประพฤติ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "စောင့်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ရက္ခတိ",
+    "thai_meaning": "รักษา",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တား",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "နိဝါရေတိ",
+    "thai_meaning": "ห้าม",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပယ်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ပဇဟတိ",
+    "thai_meaning": "ละ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရှောင်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ပရိဝဇ္ဇေတိ",
+    "thai_meaning": "เว้น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကင်း",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဝိဂစ္ဆတိ",
+    "thai_meaning": "ปราศจาก",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လွတ်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "မုစ္စတိ",
+    "thai_meaning": "พ้น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကယ်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "တာရေတိ",
+    "thai_meaning": "ช่วย",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မစ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "အနုဂ္ဂဏှာတိ",
+    "thai_meaning": "อนุเคราะห์",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ညီ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "သမ",
+    "thai_meaning": "เสมอ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပေါင်းသင်း",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "သေဝတိ",
+    "thai_meaning": "คบหา",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မှီဝဲ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဥပသေဝတိ",
+    "thai_meaning": "ซ่องเสพ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဆည်းကပ်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဥပါသတိ",
+    "thai_meaning": "นั่งใกล้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရိုသေ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "နမဿတိ",
+    "thai_meaning": "นอบน้อม",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပူဇော်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ပူဇေတိ",
+    "thai_meaning": "บูชา",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရှိခိုး",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဝန္ဒတိ",
+    "thai_meaning": "ไหว้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သီးခံ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ခမတိ",
+    "thai_meaning": "อดทน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရောင့်ရဲ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "သန္တုဿတိ",
+    "thai_meaning": "สันโดษ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မွေ့လျော်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "အဘိရမတိ",
+    "thai_meaning": "รื่นรมย์",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ငြီးငွေ့",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "နိဗ္ဗိန္ဒတိ",
+    "thai_meaning": "เบื่อหน่าย",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရွံရှာ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဇိဂုစ္ဆတိ",
+    "thai_meaning": "รังเกียจ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တုန်လှုပ်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ကမ္ပတိ",
+    "thai_meaning": "หวั่นไหว",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ထိတ်လန့်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "တဿတိ",
+    "thai_meaning": "สะดุ้ง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကြောက်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဘာယတိ",
+    "thai_meaning": "กลัว",
+    "is_ambiguous": false
+  },
+  {
+    "word": "စွမ်း",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "သက္ကောတိ",
+    "thai_meaning": "อาจ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အောင်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဇိနာတိ",
+    "thai_meaning": "ชนะ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရှုံး",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ပရာဇေတိ",
+    "thai_meaning": "แพ้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရေတွက်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဂဏေတိ",
+    "thai_meaning": "นับ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "စဉ်းစား",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဝိစာရေတိ",
+    "thai_meaning": "ตริตรอง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပိုင်းခြား",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ပရိစ္ဆိန္ဒတိ",
+    "thai_meaning": "กำหนด",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဆုံးဖြတ်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "ဝိနိစ္ဆယတိ",
+    "thai_meaning": "วินิจฉัย",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အပ်",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "နိယျာတေတိ",
+    "thai_meaning": "มอบ",
+    "is_ambiguous": true
+  },
+  {
+    "word": "မှီ",
+    "category": "กิริยาแท้",
+    "pali_equivalent": "နိဿယတိ",
+    "thai_meaning": "อิง",
+    "is_ambiguous": false
   }
 
 
+
 ];
-// แปลง Unicode normalize
+
 function normalizeStr(str) {
     return str ? str.normalize('NFC').trim() : '';
 }
 
-// Map โครงสร้างข้อมูล
+// Map โครงสร้างข้อมูลและจำแนกสี
 const grammarData = rawJSONData.map(item => {
     let colorClass = "cat-ambiguous";
     
     if (item.is_ambiguous) colorClass = "cat-ambiguous";
+    else if (item.category.includes("สังขยา") || item.category.includes("คำประสม")) colorClass = "cat-number";
     else if (item.category.includes("วิภัตติ")) colorClass = "cat-vibhatti";
-    else if (item.category.includes("อาขยาต") || item.category.includes("ธาตุ")) colorClass = "cat-akhyata";
+    else if (item.category.includes("อาขยาต") || item.category.includes("ธาตุ") || item.category.includes("นามนาม")) colorClass = "cat-akhyata";
     else if (item.category.includes("กิตก์")) colorClass = "cat-kit";
     else if (item.category.includes("นิบาต")) colorClass = "cat-nipata";
     else if (item.category.includes("คุณนาม") || item.category.includes("สัพพนาม")) colorClass = "cat-adjective";
@@ -1689,7 +3578,7 @@ const grammarData = rawJSONData.map(item => {
 const tableBody = document.getElementById('suffixTableBody');
 const dataMap = {};
 
-// เรียงลำดับจากคำยาวไปสั้น เพื่อให้ Match คำยาวก่อนเสมอ (Strict Longest Match)
+// เรียงลำดับจาก "คำยาวที่สุดไปสั้นที่สุด" เพื่อให้แมตช์คำประสมก่อนเสมอ
 const sortedGrammar = [...grammarData].sort((a, b) => b.word.length - a.word.length);
 
 sortedGrammar.forEach((item, index) => {
@@ -1707,13 +3596,9 @@ sortedGrammar.forEach((item, index) => {
     tableBody.appendChild(row);
 });
 
-function escapeRegExp(string) {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
 /**
- * 💡 MYANMAR ADVANCED TOKENIZER ENGINE
- * แบ่งประโยคพม่าออกเป็นคำและพยางค์อย่างถูกต้องตามมาตรฐาน Unicode โดยไม่ทำให้ตัวสะกดหลุด
+ * 💡 PALI-MYANMAR STRICT LONGEST-MATCH TOKENIZER
+ * ตัดคำบาลี-พม่าอย่างถูกต้อง โดยไม่ตัดกลางตัวซ้อน Virama (္) และรองรับคำประสมสมบูรณ์แบบ
  */
 function tokenizeAndHighlight(text) {
     let normalizedInput = normalizeStr(text);
@@ -1725,20 +3610,20 @@ function tokenizeAndHighlight(text) {
     while (currentIndex < normalizedInput.length) {
         let matched = false;
 
-        // ค้นหาแบบ Longest-Match-First ในตำแหน่งปัจจุบัน
+        // ค้นหาแบบ Strict Longest-Match First
         for (let item of sortedGrammar) {
             let targetWord = item.word;
             if (normalizedInput.startsWith(targetWord, currentIndex)) {
-                // ตรวจสอบว่าพยางค์ถัดไปถูกตัดกึ่งกลางวรรณยุกต์หรือไม่
                 let nextCharIndex = currentIndex + targetWord.length;
                 let nextChar = normalizedInput.charAt(nextCharIndex);
                 
-                // ถ้ารหัสถัดไปเป็นสระ/ตัวสะกดตามหลัง (เช่น ်, ိ, ု, း ฯลฯ) แสดงว่าตัดกลางพยางค์ ให้ข้ามคำนี้ไป
-                if (nextChar && /[\u102B-\u103E\u1056-\u1059\u103A]/.test(nextChar)) {
+                // ตรวจสอบตัวอักษรตามหลัง: ถ้าเป็นตัวพินทุสังโยค (္) หรือสระล่าง/สระบนที่ผูกกับตัวท้าย
+                // จะไม่ยอมให้ตัดกลางคำ ยกเว้นเป็นคำที่แมตช์เต็มรูปในคลัง
+                if (nextChar && /[\u1039\u103A\u102B-\u103E]/.test(nextChar) && targetWord.endsWith("္")) {
                     continue;
                 }
 
-                // เจอคำสมบูรณ์ Highlight ได้
+                // เจอคำประสมสมบูรณ์ Highlight ได้ทันที
                 let matchedObj = dataMap[targetWord];
                 resultHTML += `<span class="highlight ${matchedObj.class}" onclick="scrollToRow('${matchedObj.id}')">${targetWord}</span>`;
                 currentIndex += targetWord.length;
@@ -1747,7 +3632,6 @@ function tokenizeAndHighlight(text) {
             }
         }
 
-        // ถ้าไม่มีคำไหน Match ในตำแหน่งนี้ ให้ขยับทีละ 1 ตัวอักษร
         if (!matched) {
             resultHTML += normalizedInput.charAt(currentIndex);
             currentIndex++;
