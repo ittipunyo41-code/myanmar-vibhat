@@ -1,0 +1,1782 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pali-Myanmar Grammar Analyzer (Advanced Tokenizer)</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Sarabun', 'Padauk', 'Noto Sans Myanmar', sans-serif; 
+            padding: 30px 20px; 
+            background: #f8fafc; 
+            color: #334155;
+            margin: 0;
+        }
+        .container { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            background: #ffffff; 
+            padding: 30px 40px; 
+            border-radius: 16px; 
+            box-shadow: 0 4px 24px rgba(0,0,0,0.04); 
+        }
+        
+        h2 { font-weight: 600; color: #0f172a; margin-top: 0; margin-bottom: 20px; font-size: 24px; }
+        h3 { font-weight: 600; color: #334155; margin-top: 30px; font-size: 18px; }
+
+        /* ป้ายบอกหมวดหมู่ */
+        .legend { display: flex; gap: 10px; margin-bottom: 25px; flex-wrap: wrap; }
+        .legend span { 
+            padding: 6px 12px; 
+            border-radius: 20px; 
+            font-size: 13px; 
+            font-weight: 500;
+        }
+
+        /* ช่องรับข้อมูล */
+        input[type="text"] { 
+            width: 100%; 
+            padding: 14px 18px; 
+            font-size: 18px; 
+            margin-bottom: 20px; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 10px; 
+            transition: all 0.2s;
+            outline: none;
+            background: #f8fafc;
+        }
+        input[type="text"]:focus {
+            border-color: #93c5fd;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.3);
+        }
+        
+        /* ส่วนแสดงผล Highlight */
+        .input-preview { 
+            font-size: 22px; 
+            line-height: 2; 
+            margin: 10px 0 20px 0; 
+            padding: 20px; 
+            background: #ffffff; 
+            border-radius: 10px; 
+            border: 1px solid #e2e8f0; 
+            word-break: break-all; 
+            min-height: 80px;
+        }
+        .highlight { 
+            font-weight: 600; 
+            cursor: pointer; 
+            padding: 4px 8px; 
+            border-radius: 6px; 
+            transition: all 0.2s ease; 
+        }
+        .highlight:hover { filter: brightness(0.95); transform: translateY(-1px); display: inline-block; }
+        
+        /* ตาราง */
+        .table-container { 
+            max-height: 500px; 
+            overflow-y: auto; 
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 15px; text-align: left; }
+        th, td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; }
+        th { 
+            background-color: #f8fafc; 
+            color: #475569; 
+            font-weight: 600; 
+            position: sticky; 
+            top: 0; 
+            z-index: 10;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        tr:last-child td { border-bottom: none; }
+        tr { transition: background-color 0.2s; }
+        tr:hover { background-color: #f8fafc; }
+        
+        /* หมวดหมู่สีพาสเทล */
+        .cat-vibhatti { background-color: #fef08a; color: #854d0e; } /* เหลือง */
+        .cat-akhyata { background-color: #bbf7d0; color: #166534; }  /* เขียว */
+        .cat-kit { background-color: #bfdbfe; color: #1e3a8a; }      /* ฟ้า */
+        .cat-honor { background-color: #e9d5ff; color: #6b21a8; }    /* ม่วง */
+        .cat-nipata { background-color: #ffedd5; color: #9a3412; }   /* ส้ม */
+        .cat-adjective { background-color: #fbcfe8; color: #9d174d; } /* ชมพู */
+        .cat-ambiguous { background-color: #e2e8f0; color: #334155; } /* เทา */
+        
+        /* แถวที่เลือกในตาราง */
+        .active-row { 
+            background-color: #eff6ff !important; 
+            position: relative;
+        }
+        .active-row td:first-child::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 4px;
+            background-color: #3b82f6;
+        }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>ระบบวิเคราะห์ไวยากรณ์บาลี-พม่า (Advanced Tokenizer Engine)</h2>
+    
+    <div class="legend">
+        <span class="cat-vibhatti">วิภัตตินาม</span>
+        <span class="cat-akhyata">อาขยาต</span>
+        <span class="cat-kit">กิริยากิตก์</span>
+        <span class="cat-honor">ราชาศัพท์</span>
+        <span class="cat-nipata">นิบาต/คำเชื่อม</span>
+        <span class="cat-adjective">คุณนาม/สัพพนาม</span>
+        <span class="cat-ambiguous">คำพ้องรูป (ดูบริบท)</span>
+    </div>
+
+    <input type="text" id="myanmarInput" placeholder="พิมพ์หรือวางประโยคบาลี-พม่า..." value="သံသီးချင်း နတ်လူတို့၏ အလုံးစုံသော တရားတို့ကို ကိုယ်တိုင် မှန်ကန်စွာ သိတော်မူသော အကြောင်းကြောင့်လည်း 'သမ္မာသမ္ဗုဒ္ဓ' မည်တော်မူ၏။">
+    
+    <div class="input-preview" id="previewArea"></div>
+
+    <h3>ตารางไวยากรณ์บาลี-พม่า-ไทย</h3>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th width="20%">คำ (พม่า)</th>
+                    <th width="25%">หมวดหมู่</th>
+                    <th width="55%">เทียบเคียงบาลี & คำแปลไทย</th>
+                </tr>
+            </thead>
+            <tbody id="suffixTableBody">
+                <!-- ข้อมูลจะถูกเจนจาก JS -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+// ฐานข้อมูล JSON ไวยากรณ์บาลี-พม่า-ไทย (Nissaya Standard)
+const rawJSONData =[
+  {
+    "word": "သည်",
+    "category": "วิภัตตินาม (ปฐมา) / อาขยาต (กิริยาจบประโยค)",
+    "pali_equivalent": "-สิ (ปฐมา) / -ติ, -เต (อาขยาต)",
+    "thai_meaning": "อันว่า / ย่อม",
+    "is_ambiguous": true
+  },
+  {
+    "word": "က",
+    "category": "วิภัตตินาม (ปฐมา / ปัญจมี)",
+    "pali_equivalent": "-สิ (ปฐมา) / -สฺมา (ปัญจมี)",
+    "thai_meaning": "อันว่า / แต่, จาก",
+    "is_ambiguous": true
+  },
+  {
+    "word": "ကို",
+    "category": "วิภัตตินาม (ทุติยา)",
+    "pali_equivalent": "-อํ",
+    "thai_meaning": "ซึ่ง, สู่, ยัง, สิ้น, ตลอด, กะ, เฉพาะ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သို့",
+    "category": "วิภัตตินาม (ทุติยา / สัตตมี)",
+    "pali_equivalent": "-อํ (ทุติยา) / -สฺมึ (สัตตมี)",
+    "thai_meaning": "สู่, ยัง / ใน, ที่",
+    "is_ambiguous": true
+  },
+  {
+    "word": "ဖြင့်",
+    "category": "วิภัตตินาม (ตติยา)",
+    "pali_equivalent": "-นา",
+    "thai_meaning": "ด้วย, โดย, อัน, ตาม, เพราะ, มี",
+    "is_ambiguous": false
+  },
+  {
+    "word": "နှင့်",
+    "category": "วิภัตตินาม (ตติยา) / นิบาต (สมุจจยัตถะ)",
+    "pali_equivalent": "-นา / สทฺธึ / จ",
+    "thai_meaning": "ด้วย, กับ / และ",
+    "is_ambiguous": true
+  },
+  {
+    "word": "အား",
+    "category": "วิภัตตินาม (จตุตถี)",
+    "pali_equivalent": "-ส (จตุตถี)",
+    "thai_meaning": "แก่, เพื่อ, ต่อ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ငှာ",
+    "category": "วิภัตตินาม (จตุตถี) / กิริยากิตก์ (ตุมัตถะ)",
+    "pali_equivalent": "-ส (จตุตถี) / -ตุํ",
+    "thai_meaning": "เพื่อ / เพื่ออัน",
+    "is_ambiguous": true
+  },
+  {
+    "word": "အလို့ငှာ",
+    "category": "วิภัตตินาม (จตุตถี)",
+    "pali_equivalent": "ตฺถาย",
+    "thai_meaning": "เพื่อประโยชน์แก่",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မှ",
+    "category": "วิภัตตินาม (ปัญจมี)",
+    "pali_equivalent": "-สฺมา",
+    "thai_meaning": "แต่, จาก, กว่า, เหตุ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ထက်",
+    "category": "วิภัตตินาม (ปัญจมี / เปรียบเทียบ)",
+    "pali_equivalent": "-สฺมา",
+    "thai_meaning": "กว่า",
+    "is_ambiguous": false
+  },
+  {
+    "word": "၏",
+    "category": "วิภัตตินาม (ฉัฏฐี) / อาขยาต",
+    "pali_equivalent": "-ส (ฉัฏฐี) / -ติ, -เต (อาขยาต)",
+    "thai_meaning": "แห่ง, ของ, เมื่อ / ย่อม",
+    "is_ambiguous": true
+  },
+  {
+    "word": "၌",
+    "category": "วิภัตตินาม (สัตตมี)",
+    "pali_equivalent": "-สฺมึ",
+    "thai_meaning": "ใน, ใกล้, ที่, ครั้นเมื่อ, ในเพราะ, เหนือ, บน, ณ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တွင်",
+    "category": "วิภัตตินาม (สัตตมี) / นิบาตบอกเวลา",
+    "pali_equivalent": "-สฺมึ, -สุ / กาเล",
+    "thai_meaning": "ใน, ในหมู่ / ในกาลเมื่อ",
+    "is_ambiguous": true
+  },
+  {
+    "word": "မှာ",
+    "category": "วิภัตตินาม (สัตตมี) / นิบาตเน้นประธาน",
+    "pali_equivalent": "-สฺมึ / ปน",
+    "thai_meaning": "ใน, ที่ / ส่วนว่า",
+    "is_ambiguous": true
+  },
+  {
+    "word": "ဝယ်",
+    "category": "วิภัตตินาม (สัตตมี)",
+    "pali_equivalent": "-สฺมึ",
+    "thai_meaning": "ใน, ที่, ณ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အို",
+    "category": "วิภัตตินาม (อาลปนะ)",
+    "pali_equivalent": "โภ, โภนฺโต",
+    "thai_meaning": "ข้าแต่, ดูก่อน, แน่ะ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တို့",
+    "category": "ปัจจัยพหูพจน์ (ใช้ต่อนามและสัพพนาม)",
+    "pali_equivalent": "-โย, -นํ, -หิ, -สุ",
+    "thai_meaning": "...ทั้งหลาย",
+    "is_ambiguous": false
+  },
+  {
+    "word": "များ",
+    "category": "ปัจจัยพหูพจน์ / คุณนาม",
+    "pali_equivalent": "พหု",
+    "thai_meaning": "...ทั้งหลาย / มาก",
+    "is_ambiguous": true
+  },
+  {
+    "word": "အံ့",
+    "category": "วิภัตติอาขยาต (อนาคตกาล)",
+    "pali_equivalent": "-สฺสติ",
+    "thai_meaning": "จัก, พึง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လတံ့",
+    "category": "วิภัตติอาขยาต (อนาคตกาล)",
+    "pali_equivalent": "-สฺสติ",
+    "thai_meaning": "จัก",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မည်",
+    "category": "วิภัตติอาขยาต (อนาคตกาล)",
+    "pali_equivalent": "-สฺสติ",
+    "thai_meaning": "จัก, คงจะ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ခဲ့",
+    "category": "วิภัตติอาขยาต (อดีตกาล)",
+    "pali_equivalent": "อชฺชตนี / หิยตฺตนี วิภัตติ",
+    "thai_meaning": "แล้ว",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပြီ",
+    "category": "วิภัตติอาขยาต (อดีตกาล / ปัจจุบันสมบูรณ์)",
+    "pali_equivalent": "อชฺชตนี",
+    "thai_meaning": "แล้ว",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဖူး",
+    "category": "วิภัตติอาขยาต (บอกประสบการณ์)",
+    "pali_equivalent": "ภูตปุพฺพ",
+    "thai_meaning": "เคย",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကြ",
+    "category": "ปัจจัยกิริยา (พหูพจน์)",
+    "pali_equivalent": "-นฺติ, -นฺตุ, -ยํ, -ม",
+    "thai_meaning": "(แสดงกิริยาของประธานพหูพจน์)",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လော့",
+    "category": "วิภัตติอาขยาต (ปัญจมี - คำสั่ง)",
+    "pali_equivalent": "-ตุ, -หิ",
+    "thai_meaning": "จง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "စေ",
+    "category": "ปัจจัยเหตุกัตตุวาจก / อาขยาต (คำสั่ง)",
+    "pali_equivalent": "-ณาเป / -ตุ",
+    "thai_meaning": "ให้(ทำ) / จง",
+    "is_ambiguous": true
+  },
+  {
+    "word": "ပါ",
+    "category": "นิบาต (แสดงความสุภาพ) / กิริยา",
+    "pali_equivalent": "ภนฺเต",
+    "thai_meaning": "เถิด, ขอรับ, เจ้าค่ะ / พาไป, รวม",
+    "is_ambiguous": true
+  },
+  {
+    "word": "စို့",
+    "category": "วิภัตติอาขยาต (ชักชวน)",
+    "pali_equivalent": "-ม",
+    "thai_meaning": "จง...กันเถิด",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သော",
+    "category": "ปัจจัยกิริยากิตก์ (วิเสสนะ)",
+    "pali_equivalent": "-นฺต, -มาน",
+    "thai_meaning": "ผู้, อัน, ตัว",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သည့်",
+    "category": "ปัจจัยกิริยากิตก์ (วิเสสนะ)",
+    "pali_equivalent": "-นฺต, -มาน",
+    "thai_meaning": "ผู้, อัน, ตัว",
+    "is_ambiguous": false
+  },
+  {
+    "word": "၍",
+    "category": "ปัจจัยกิริยากิตก์ (บุพพกาลกิริยา)",
+    "pali_equivalent": "-ตฺวา",
+    "thai_meaning": "แล้ว",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လျက်",
+    "category": "ปัจจัยกิริยากิตก์ (อัพภันตรกิริยา)",
+    "pali_equivalent": "-นฺต, -มาน",
+    "thai_meaning": "อยู่, เมื่อ, พลาง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "စဉ်",
+    "category": "นิบาต / ปัจจัยบอกกาล",
+    "pali_equivalent": "กาเล / -นฺต",
+    "thai_meaning": "เมื่อ, ขณะที่",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အပ်",
+    "category": "ปัจจัยกิริยากิตก์ (กัมมวาจก / กิจจะ)",
+    "pali_equivalent": "-ต / -อนีย, -ตพฺพ",
+    "thai_meaning": "อัน...แล้ว / อัน...พึง",
+    "is_ambiguous": true
+  },
+  {
+    "word": "တတ်",
+    "category": "ปัจจัยกิริยา (ความสามารถ / ปกติ)",
+    "pali_equivalent": "สกฺโกติ / -สีล",
+    "thai_meaning": "อาจ, สามารถ / มีปกติ...",
+    "is_ambiguous": true
+  },
+  {
+    "word": "ဖွယ်",
+    "category": "ปัจจัยกิริยากิตก์ (กิจจะ)",
+    "pali_equivalent": "-ตพฺพ",
+    "thai_meaning": "พึง, น่า",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရာ",
+    "category": "ปัจจัยกิริยากิตก์ / นาม (ฐานะ)",
+    "pali_equivalent": "-ตพฺพ / ฐาน",
+    "thai_meaning": "พึง, ควร / ฐานะ, ที่",
+    "is_ambiguous": true
+  },
+  {
+    "word": "လျှင်",
+    "category": "นิบาต (เงื่อนไข / อวธารณะ)",
+    "pali_equivalent": "สเจ, เจ / เอว",
+    "thai_meaning": "ถ้าว่า / นั่นเทียว",
+    "is_ambiguous": true
+  },
+  {
+    "word": "မူ",
+    "category": "นิบาต (เงื่อนไข)",
+    "pali_equivalent": "สเจ, เจ",
+    "thai_meaning": "ถ้าว่า",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မူကား",
+    "category": "นิบาต (ตุทาที)",
+    "pali_equivalent": "ปน, ตุ",
+    "thai_meaning": "ส่วนว่า, ก็",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကား",
+    "category": "นิบาต (ตุทาที)",
+    "pali_equivalent": "ปน, ตุ",
+    "thai_meaning": "ส่วนว่า, ก็",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လည်း",
+    "category": "นิบาต (สมุจจยัตถะ)",
+    "pali_equivalent": "จ, ปิ",
+    "thai_meaning": "ด้วย, แม้, ก็",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လည်းကောင်း",
+    "category": "นิบาต (สมุจจยัตถะ)",
+    "pali_equivalent": "จ",
+    "thai_meaning": "ด้วย, และ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပင်",
+    "category": "นิบาต (อวธารณะ)",
+    "pali_equivalent": "เอว, ปิ",
+    "thai_meaning": "นั่นเทียว, แม้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သာလျှင်",
+    "category": "นิบาต (อวธารณะ)",
+    "pali_equivalent": "เอว",
+    "thai_meaning": "เท่านั้นเทียว",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကြောင့်",
+    "category": "นิบาต (เหตุ)",
+    "pali_equivalent": "กรณา, เหตุ",
+    "thai_meaning": "เพราะ, เพราะเหตุ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သဖြင့်",
+    "category": "นิบาต (เหตุ / อาการ)",
+    "pali_equivalent": "ตตฺตา / ภาเวน",
+    "thai_meaning": "เพราะเหตุที่ / โดยประการ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရကား",
+    "category": "นิบาต (เหตุ)",
+    "pali_equivalent": "ตสฺมา",
+    "thai_meaning": "เพราะเหตุนั้น, ดังนั้น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဟု",
+    "category": "นิบาต (สรูปะ)",
+    "pali_equivalent": "อิติ",
+    "thai_meaning": "ว่า, ดังนี้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တကား",
+    "category": "นิบาต (อัจฉริยะ)",
+    "pali_equivalent": "วต",
+    "thai_meaning": "หนอ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မ",
+    "category": "นิบาต (ปฏิเสธ)",
+    "pali_equivalent": "น, อ-",
+    "thai_meaning": "ไม่",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဘဲ",
+    "category": "นิบาต (ปฏิเสธ / เว้น)",
+    "pali_equivalent": "วินา",
+    "thai_meaning": "เว้น, ปราศจาก",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အလုံးစုံ",
+    "category": "สัพพนาม (วิเสสนะ)",
+    "pali_equivalent": "สพฺพ",
+    "thai_meaning": "ทั้งปวง, ทั้งสิ้น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ခပ်သိမ်း",
+    "category": "สัพพนาม (วิเสสนะ)",
+    "pali_equivalent": "สพฺพ",
+    "thai_meaning": "ทั้งปวง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဤ",
+    "category": "สัพพนาม (วิเสสนะ)",
+    "pali_equivalent": "อิม, เอတ",
+    "thai_meaning": "นี้, นั่น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ထို",
+    "category": "สัพพนาม (วิเสสนะ)",
+    "pali_equivalent": "ต",
+    "thai_meaning": "นั้น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အကြင်",
+    "category": "สัพพนาม (Relative)",
+    "pali_equivalent": "ย",
+    "thai_meaning": "ใด",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အဘယ်",
+    "category": "สัพพนาม (Interrogative)",
+    "pali_equivalent": "กึ, ก",
+    "thai_meaning": "อะไร, ไหน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ငါ",
+    "category": "สัพพนาม (บุรุษที่ 1)",
+    "pali_equivalent": "อมฺห",
+    "thai_meaning": "ข้าพเจ้า, เรา",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကျွန်ုပ်",
+    "category": "สัพพนาม (บุรุษที่ 1)",
+    "pali_equivalent": "อมฺห",
+    "thai_meaning": "ข้าพเจ้า",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သင်",
+    "category": "สัพพนาม (บุรุษที่ 2)",
+    "pali_equivalent": "ตุมฺห",
+    "thai_meaning": "ท่าน, เธอ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မင်း",
+    "category": "สัพพนาม (บุรุษที่ 2) / นาม",
+    "pali_equivalent": "ตุมฺห / ราช, ภูပတိ",
+    "thai_meaning": "ท่าน / พระราชา, ผู้ปกครอง",
+    "is_ambiguous": true
+  },
+  {
+    "word": "သူ",
+    "category": "สัพพนาม (บุรุษที่ 3)",
+    "pali_equivalent": "ต (ปุงลิงค์/อิตถีลิงค์)",
+    "thai_meaning": "เขา, ผู้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "၎င်း",
+    "category": "สัพพนาม",
+    "pali_equivalent": "ต",
+    "thai_meaning": "สิ่งนั้น, เขา",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ယင်း",
+    "category": "สัพพนาม",
+    "pali_equivalent": "ต",
+    "thai_meaning": "สิ่งนั้น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အဘယ်သူ",
+    "category": "สัพพนามคำถาม",
+    "pali_equivalent": "ก, กตร",
+    "thai_meaning": "ใคร",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အဘယ်အရာ",
+    "category": "สัพพนามคำถาม",
+    "pali_equivalent": "กึ",
+    "thai_meaning": "สิ่งใด, อะไร",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တစ်စုံတစ်ယောက်",
+    "category": "สัพพนามไม่เจาะจง",
+    "pali_equivalent": "โกจิ",
+    "thai_meaning": "ใครๆ, คนใดคนหนึ่ง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တစ်စုံတစ်ခု",
+    "category": "สัพพนามไม่เจาะจง",
+    "pali_equivalent": "กิญฺจิ",
+    "thai_meaning": "สิ่งใดสิ่งหนึ่ง, อะไรๆ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မိမိ",
+    "category": "สัพพนามสะท้อน",
+    "pali_equivalent": "อตฺต",
+    "thai_meaning": "ตน, ตนเอง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကိုယ်",
+    "category": "สัพพนาม / นาม",
+    "pali_equivalent": "สยํ / กาย",
+    "thai_meaning": "ตนเอง / ร่างกาย",
+    "is_ambiguous": true
+  },
+  {
+    "word": "အစ",
+    "category": "นาม (อาการนาม)",
+    "pali_equivalent": "อาทิ",
+    "thai_meaning": "เบื้องต้น, จุดเริ่มต้น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အလယ်",
+    "category": "นาม (อาการนาม)",
+    "pali_equivalent": "มชฺฌ",
+    "thai_meaning": "ท่ามกลาง, ตรงกลาง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အဆုံး",
+    "category": "นาม (อาการนาม)",
+    "pali_equivalent": "ปริโยสาน, อนฺต",
+    "thai_meaning": "ที่สุด, จุดจบ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "များစွာ",
+    "category": "คุณนามบอกปริมาณ",
+    "pali_equivalent": "พหุ",
+    "thai_meaning": "มาก",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အနည်းငယ်",
+    "category": "คุณนามบอกปริมาณ",
+    "pali_equivalent": "อปฺป, ถোক",
+    "thai_meaning": "น้อย, เล็กน้อย",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တစ်ပါး",
+    "category": "สัพพนาม / ลักษณนาม",
+    "pali_equivalent": "อญฺญ / -",
+    "thai_meaning": "อื่น / องค์, รูป",
+    "is_ambiguous": true
+  },
+  {
+    "word": "တပါး",
+    "category": "คุณนาม",
+    "pali_equivalent": "อญฺญ",
+    "thai_meaning": "อื่น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "များ",
+    "category": "ปัจจัยพหูพจน์ (ใช้กับนาม/สัพพนาม)",
+    "pali_equivalent": "-โย, -นํ, พหุ",
+    "thai_meaning": "...ทั้งหลาย, มาก",
+    "is_ambiguous": true
+  },
+  {
+    "word": "အ",
+    "category": "ปัจจัยสร้างนาม (อุปสรรค)",
+    "pali_equivalent": "-",
+    "thai_meaning": "(ใช้เติมหน้ากิริยาหรือคุณศัพท์เพื่อให้เป็นนาม)",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အရာ",
+    "category": "นาม",
+    "pali_equivalent": "วตฺถุ, ฐาน",
+    "thai_meaning": "สิ่ง, เรื่อง, ฐานะ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အကြောင်း",
+    "category": "นาม / นิบาต",
+    "pali_equivalent": "กรณ, เหตุ",
+    "thai_meaning": "เหตุ, ปัจจัย / เพราะ",
+    "is_ambiguous": true
+  },
+  {
+    "word": "ယောကျ်ား",
+    "category": "นาม",
+    "pali_equivalent": "ปุริส",
+    "thai_meaning": "บุรุษ, ชาย",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မိန်းမ",
+    "category": "นาม",
+    "pali_equivalent": "อิตฺถี, นารี",
+    "thai_meaning": "สตรี, หญิง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သား",
+    "category": "นาม / ปัจจัยระบุเพศ",
+    "pali_equivalent": "ปุตฺต",
+    "thai_meaning": "บุตรชาย, ผู้...",
+    "is_ambiguous": true
+  },
+  {
+    "word": "သမီး",
+    "category": "นาม",
+    "pali_equivalent": "ธีตา",
+    "thai_meaning": "บุตรสาว",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဆရာ",
+    "category": "นาม",
+    "pali_equivalent": "อาจริย",
+    "thai_meaning": "อาจารย์, ครู",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တပည့်",
+    "category": "นาม",
+    "pali_equivalent": "สิสฺส",
+    "thai_meaning": "ศิษย์",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အရှင်",
+    "category": "นาม",
+    "pali_equivalent": "สามี, ภนฺเต",
+    "thai_meaning": "เจ้า, นาย, ผู้เจริญ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဘုရား",
+    "category": "นาม",
+    "pali_equivalent": "พุทฺธ",
+    "thai_meaning": "พระพุทธเจ้า, พระเป็นเจ้า",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တရား",
+    "category": "นาม",
+    "pali_equivalent": "ธมฺม",
+    "thai_meaning": "ธรรมะ, กฎหมาย",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သံဃာ",
+    "category": "นาม",
+    "pali_equivalent": "สงฺฆ",
+    "thai_meaning": "พระสงฆ์, หมู่",
+    "is_ambiguous": false
+  },
+  
+  {
+    "word": "ထံ",
+    "category": "วิภัตตินาม (สัตตมี/ทุติยา - สถานที่)",
+    "pali_equivalent": "สนฺတိကํ / สนฺติเก",
+    "thai_meaning": "สำนัก, สู่สำนัก, ในสำนัก",
+    "is_ambiguous": true
+  },
+  {
+    "word": "အထံ",
+    "category": "วิภัตตินาม (สัตตมี - สถานที่)",
+    "pali_equivalent": "สนฺတိက",
+    "thai_meaning": "สำนัก, ที่ใกล้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဆီ",
+    "category": "วิภัตตินาม (ทุติยา/สัตตมี - ทิศทาง)",
+    "pali_equivalent": "สนฺတိကํ",
+    "thai_meaning": "ยังสำนัก, สู่ที่",
+    "is_ambiguous": true
+  },
+  {
+    "word": "ရှေ့",
+    "category": "คำวิเศษณ์/นาม (สถานที่/เวลา)",
+    "pali_equivalent": "ปุเร / ปุรโต",
+    "thai_meaning": "ข้างหน้า, ก่อน",
+    "is_ambiguous": true
+  },
+  {
+    "word": "နောက်",
+    "category": "คำวิเศษณ์/นาม (สถานที่/เวลา)",
+    "pali_equivalent": "ปจฺฉာ / ปจฺฉโต",
+    "thai_meaning": "ข้างหลัง, ภายหลัง",
+    "is_ambiguous": true
+  },
+  {
+    "word": "အထက်",
+    "category": "คำวิเศษณ์/นาม (สถานที่)",
+    "pali_equivalent": "อุปริ",
+    "thai_meaning": "เบื้องบน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အောက်",
+    "category": "คำวิเศษณ์/นาม (สถานที่)",
+    "pali_equivalent": "เหฏฺฐา",
+    "thai_meaning": "เบื้องต่ำ, ภายใต้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အတွင်း",
+    "category": "คำวิเศษณ์/นาม (สถานที่)",
+    "pali_equivalent": "อนฺโต",
+    "thai_meaning": "ภายใน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အပြင်",
+    "category": "คำวิเศษณ์/นาม (สถานที่)",
+    "pali_equivalent": "พหิ",
+    "thai_meaning": "ภายนอก",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အပါး",
+    "category": "คำวิเศษณ์/นาม (สถานที่)",
+    "pali_equivalent": "ปสฺส",
+    "thai_meaning": "ข้าง, ที่ใกล้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အနီး",
+    "category": "คำวิเศษณ์/นาม (สถานที่)",
+    "pali_equivalent": "สมีပ",
+    "thai_meaning": "ที่ใกล้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အခါ",
+    "category": "นาม (กาลเวลา)",
+    "pali_equivalent": "กาล / สมย",
+    "thai_meaning": "กาล, เวลา",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကာလ",
+    "category": "นาม (กาลเวลา)",
+    "pali_equivalent": "กาล",
+    "thai_meaning": "กาล",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သမယ",
+    "category": "นาม (กาลเวลา)",
+    "pali_equivalent": "สมย",
+    "thai_meaning": "สมัย",
+    "is_ambiguous": false
+  },
+  {
+    "word": "နေ့",
+    "category": "นาม (กาลเวลา)",
+    "pali_equivalent": "ทิวส / ทิวา",
+    "thai_meaning": "วัน, กลางวัน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ည",
+    "category": "นาม (กาลเวลา)",
+    "pali_equivalent": "รตฺติ",
+    "thai_meaning": "ราตรี, คืน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ယနေ့",
+    "category": "คำวิเศษณ์ (กาลเวลา)",
+    "pali_equivalent": "อชฺช",
+    "thai_meaning": "วันนี้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "နက်ဖြန်",
+    "category": "คำวิเศษณ์ (กาลเวลา)",
+    "pali_equivalent": "สุเว",
+    "thai_meaning": "พรุ่งนี้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မနေ့",
+    "category": "คำวิเศษณ์ (กาลเวลา)",
+    "pali_equivalent": "หิยฺโย",
+    "thai_meaning": "เมื่อวาน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ယခု",
+    "category": "คำวิเศษณ์ (กาลเวลา)",
+    "pali_equivalent": "อิทานิ / เอตรหิ",
+    "thai_meaning": "ในกาลนี้, เดี๋ยวนี้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ထိုအခါ",
+    "category": "คำวิเศษณ์ (กาลเวลา)",
+    "pali_equivalent": "ตทา / ตํ กาลํ",
+    "thai_meaning": "ในกาลนั้น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အမြဲ",
+    "category": "คำวิเศษณ์ (กาลเวลา)",
+    "pali_equivalent": "สทา / นิจฺจํ",
+    "thai_meaning": "เสมอ, เนืองนิตย์",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တစ်ရံတစ်ခါ",
+    "category": "คำวิเศษณ์ (กาลเวลา)",
+    "pali_equivalent": "กทาจิ",
+    "thai_meaning": "ในบางคราว",
+    "is_ambiguous": false
+  },
+  {
+    "word": "နိုင်",
+    "category": "ปัจจัยเสริมกิริยา (ศักยภาพ)",
+    "pali_equivalent": "สกฺโกติ",
+    "thai_meaning": "สามารถ, ได้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သင့်",
+    "category": "ปัจจัยเสริมกิริยา (ความเหมาะสม)",
+    "pali_equivalent": "วฏฺฏติ / ยุตฺต",
+    "thai_meaning": "ควร, สมควร",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ထိုက်",
+    "category": "ปัจจัยเสริมกิริยา (ความเหมาะสม)",
+    "pali_equivalent": "อรหติ / ยุตฺต",
+    "thai_meaning": "ควร, คู่ควร",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကောင်း",
+    "category": "ปัจจัยเสริมกิริยา / คุณนาม",
+    "pali_equivalent": "ภทฺဒก / สุนฺဒရ",
+    "thai_meaning": "อาจจะ, น่าจะ / ดี",
+    "is_ambiguous": true
+  },
+  {
+    "word": "ရ",
+    "category": "ปัจจัยเสริมกิริยา / กิริยา",
+    "pali_equivalent": "ลภติ",
+    "thai_meaning": "ได้, ต้อง",
+    "is_ambiguous": true
+  },
+  {
+    "word": "ရှာ",
+    "category": "ปัจจัยเสริมกิริยา (แสดงความเอ็นดู/สงสาร) / กิริยา",
+    "pali_equivalent": "คเวสติ (เมื่อเป็นกิริยา)",
+    "thai_meaning": "แสวงหา / น่าสงสาร, หนอ (เสริมกิริยา)",
+    "is_ambiguous": true
+  },
+  {
+    "word": "လေ",
+    "category": "ปัจจัยเสริมกิริยา (แสดงความต่อเนื่องหรือเหตุการณ์อดีต) / นาม",
+    "pali_equivalent": "วาต (นาม)",
+    "thai_meaning": "ลม / แล, หนอ, เล่า (เสริมกิริยา)",
+    "is_ambiguous": true
+  },
+  {
+    "word": "ချေ",
+    "category": "ปัจจัยเสริมกิริยา (เน้นย้ำ)",
+    "pali_equivalent": "-",
+    "thai_meaning": "แล, เถิด",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဘူး",
+    "category": "ปัจจัยกิริยา (ปฏิเสธอดีต/ประสบการณ์)",
+    "pali_equivalent": "น / น ปုพฺพ",
+    "thai_meaning": "ไม่เคย",
+    "is_ambiguous": false
+  },
+  {
+    "word": "နှင့်တကွ",
+    "category": "นิบาตเชื่อมความ",
+    "pali_equivalent": "สทฺธึ",
+    "thai_meaning": "ด้วย, พร้อมด้วย",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သာမက",
+    "category": "นิบาตเชื่อมความ",
+    "pali_equivalent": "น เกဝလํ",
+    "thai_meaning": "ไม่เพียงแต่",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သည့်ပြင်",
+    "category": "นิบาตเชื่อมความ",
+    "pali_equivalent": "ตโต ပရํ / အညတ္ထ",
+    "thai_meaning": "นอกจากนี้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဆိုလျှင်",
+    "category": "นิบาต (เงื่อนไข)",
+    "pali_equivalent": "เจ / ယဒိ",
+    "thai_meaning": "หากว่า, ถ้าว่า",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရင်",
+    "category": "นิบาต (เงื่อนไข ภาษาพูด/นิสสยะบางคัมภีร์)",
+    "pali_equivalent": "เจ",
+    "thai_meaning": "ถ้า",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မှသာ",
+    "category": "นิบาต (เงื่อนไขเฉพาะ)",
+    "pali_equivalent": "ဧဝ",
+    "thai_meaning": "ต่อเมื่อ...เท่านั้น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လျှင်လည်း",
+    "category": "นิบาต (เงื่อนไข)",
+    "pali_equivalent": "စာပိ",
+    "thai_meaning": "ถึงแม้ว่า",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကတည်းက",
+    "category": "นิบาต (กาลเวลาเริ่มต้น)",
+    "pali_equivalent": "ပဋ္ဌာယ",
+    "thai_meaning": "จำเดิมแต่, ตั้งแต่",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လောက်အောင်",
+    "category": "นิบาต (ประมาณ/ผลลัพธ์)",
+    "pali_equivalent": "ယာဝ",
+    "thai_meaning": "จนกระทั่ง, พอที่จะ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လုမတတ်",
+    "category": "คำวิเศษณ์ (แสดงอาการ)",
+    "pali_equivalent": "ဝိယ",
+    "thai_meaning": "ราวกับว่า, แทบจะ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကောင်းစွာ",
+    "category": "คำวิเศษณ์",
+    "pali_equivalent": "သမ္မာ / သုဋ္ဌု",
+    "thai_meaning": "โดยชอบ, อย่างดี",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လျင်မြန်စွာ",
+    "category": "คำวิเศษณ์",
+    "pali_equivalent": "သီဃံ / လဟု",
+    "thai_meaning": "โดยเร็ว, พลัน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဖြည်းညင်းစွာ",
+    "category": "คำวิเศษณ์",
+    "pali_equivalent": "သဏိကံ",
+    "thai_meaning": "โดยช้าๆ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရိုသေစွာ",
+    "category": "คำวิเศษณ์",
+    "pali_equivalent": "သက္ကစ္စံ",
+    "thai_meaning": "โดยเคารพ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မှန်ကန်စွာ",
+    "category": "คำวิเศษณ์",
+    "pali_equivalent": "တထာ / သမ္မာ",
+    "thai_meaning": "โดยถูกต้อง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မုချ",
+    "category": "คำวิเศษณ์ (ความแน่นอน)",
+    "pali_equivalent": "ဧကန္တေန / နူနံ",
+    "thai_meaning": "แน่แท้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဧကန်",
+    "category": "คำวิเศษณ์ (ความแน่นอน)",
+    "pali_equivalent": "ဧကန္တ",
+    "thai_meaning": "โดยแท้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "စင်စစ်",
+    "category": "คำวิเศษณ์ (ความแน่นอน)",
+    "pali_equivalent": "ပန / ဝေ",
+    "thai_meaning": "แท้จริง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အမှန်",
+    "category": "คำวิเศษณ์ / နာမ်",
+    "pali_equivalent": "သစ္စ",
+    "thai_meaning": "ความจริง, แท้จริง",
+    "is_ambiguous": true
+  },
+  {
+    "word": "အလကား",
+    "category": "คำวิเศษณ์",
+    "pali_equivalent": "မုဒါ",
+    "thai_meaning": "เปล่าประโยชน์",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အချည်းနှီး",
+    "category": "คำวิเศษณ์",
+    "pali_equivalent": "မောဃ / ဝိသုံ",
+    "thai_meaning": "เปล่า, ไร้ประโยชน์",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မျှ",
+    "category": "นิบาต (ประมาณ)",
+    "pali_equivalent": "မတ္တ",
+    "thai_meaning": "สักว่า, เพียง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "မတ္တ",
+    "category": "နာမ် / နိပါတ် (บาลีทับศัพท์)",
+    "pali_equivalent": "မတ္တ",
+    "thai_meaning": "สักว่า, ประมาณ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အစွမ်းဖြင့်",
+    "category": "ဝိဘတ် (တတိယာ)",
+    "pali_equivalent": "ဝသေန",
+    "thai_meaning": "ด้วยอำนาจ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လျောက်",
+    "category": "ဝိဘတ် / နိပါတ်",
+    "pali_equivalent": "အနု",
+    "thai_meaning": "ตาม, สมควรแก่",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အဖြစ်",
+    "category": "နာမ် (ภาวนาม)",
+    "pali_equivalent": "ဘာဝ",
+    "thai_meaning": "ความเป็น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သဘော",
+    "category": "နာမ်",
+    "pali_equivalent": "သဘာဝ / ဓမ္မ",
+    "thai_meaning": "สภาวะ, ธรรมชาติ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အစဉ်",
+    "category": "နာမ် / ဝိသေသန",
+    "pali_equivalent": "ကမ / အနုက္ကမ",
+    "thai_meaning": "ลำดับ, ตามลำดับ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အပြား",
+    "category": "နာမ်",
+    "pali_equivalent": "ပကာရ / ဘေဒ",
+    "thai_meaning": "ประการ, ชนิด",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အမျိုးမျိုး",
+    "category": "နာမ် / ဝိသေသန",
+    "pali_equivalent": "နာနာ / ဝိဝိဓ",
+    "thai_meaning": "ต่างๆ นานา",
+    "is_ambiguous": false
+  },
+  {
+    "word": "စသည်",
+    "category": "နိပါတ် / ဝိသေသန",
+    "pali_equivalent": "အာဒိ",
+    "thai_meaning": "เป็นต้น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အစရှိသော",
+    "category": "ဝိသေသန (กိရိယာကိဒ်)",
+    "pali_equivalent": "အာဒိက / အာဒိ",
+    "thai_meaning": "มี...เป็นต้น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အကြား",
+    "category": "နာမ် / ဝိဘတ်",
+    "pali_equivalent": "အန္တရ",
+    "thai_meaning": "ระหว่าง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အရပ်",
+    "category": "နာမ်",
+    "pali_equivalent": "ဋ္ဌာန / ဒိသာ",
+    "thai_meaning": "ทิศ, สถานที่",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဌာန",
+    "category": "နာမ်",
+    "pali_equivalent": "ဋ္ဌာန",
+    "thai_meaning": "ฐานะ, ที่",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ချိန်",
+    "category": "နာမ်",
+    "pali_equivalent": "ကာလ",
+    "thai_meaning": "เวลา, คราว",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရှေး",
+    "category": "နာမ် / ဝိသေသန",
+    "pali_equivalent": "ပုဗ္ဗ / အတီတ",
+    "thai_meaning": "อดีต, ก่อน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တကွ",
+    "category": "နိပါတ်",
+    "pali_equivalent": "သဟ / သဒ္ဓိံ",
+    "thai_meaning": "พร้อมกับ, ด้วยกัน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကျုပ်",
+    "category": "สรรพนาม (บุรุษที่ 1 ภาษาสนทนา/วรรณกรรมบ้าง)",
+    "pali_equivalent": "အမှာ",
+    "thai_meaning": "ฉัน, ข้าพเจ้า",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ခင်ဗျား",
+    "category": "สรรพนาม (บุรุษที่ 2 สุภาพบุรุษ)",
+    "pali_equivalent": "တုမှာ",
+    "thai_meaning": "คุณ, ท่าน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရှင်",
+    "category": "สรรพนาม (บุรุษที่ 2 สุภาพสตรี) / နာမ်",
+    "pali_equivalent": "တုမှာ / သာမီ",
+    "thai_meaning": "คุณ (หญิงพูด) / เจ้า, นาย",
+    "is_ambiguous": true
+  },
+  {
+    "word": "အကျွန်",
+    "category": "สรรพนาม (บุรุษที่ 1 อดีต)",
+    "pali_equivalent": "အမှာ",
+    "thai_meaning": "ข้าพเจ้า",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အကျွန်ုပ်",
+    "category": "สรรพนาม (บุรุษที่ 1)",
+    "pali_equivalent": "အမှာ",
+    "thai_meaning": "ข้าพระพุทธเจ้า, ข้าพเจ้า",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ထိုထို",
+    "category": "สรรพนาม (ဝိသေသန - ไกล)",
+    "pali_equivalent": "တ (repeated)",
+    "thai_meaning": "นั้นๆ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဤဤ",
+    "category": "สรรพนาม (ဝိသေသန - ใกล้)",
+    "pali_equivalent": "ဣမ (repeated)",
+    "thai_meaning": "นี้ๆ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တခြား",
+    "category": "สรรพนาม / ဝိသေသန",
+    "pali_equivalent": "အည",
+    "thai_meaning": "อื่น, อย่างอื่น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တယ်",
+    "category": "วิภัตติอาขยาต (ปัจจุบัน/อดีต - บอกเล่า)",
+    "pali_equivalent": "-ติ / -เต (Realis Mood)",
+    "thai_meaning": "ย่อม, แล้ว (ใช้บอกความเป็นจริงหรือสิ่งที่เกิดขึ้นแล้ว ภาษาพูด)",
+    "is_ambiguous": true
+  },
+  {
+    "word": "မယ်",
+    "category": "วิภัตติอาขยาต (อนาคตกาล)",
+    "pali_equivalent": "-สฺสติ (Irrealis Mood)",
+    "thai_meaning": "จัก, จะ (ภาษาพูด)",
+    "is_ambiguous": false
+  },
+  {
+    "word": "နေ",
+    "category": "ปัจจัยเสริมกิริยา (ปัจจุบันกำลังกระทำ)",
+    "pali_equivalent": "วิหรติ / วตฺตมาน",
+    "thai_meaning": "กำลัง...อยู่",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပြီးပြီ",
+    "category": "ปัจจัยเสริมกิริยา (อดีตสมบูรณ์)",
+    "pali_equivalent": "นิฏฺฐิต / ปริปุณฺณ",
+    "thai_meaning": "เรียบร้อยแล้ว, เสร็จแล้ว",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တော့",
+    "category": "ปัจจัยกิริยา (กาลอนาคตใกล้/เน้นย้ำ)",
+    "pali_equivalent": "อิทานิ (Prospective)",
+    "thai_meaning": "กำลังจะ, เถิด",
+    "is_ambiguous": true
+  },
+  {
+    "word": "တော့မယ်",
+    "category": "วิภัตติอาขยาต (อนาคตใกล้)",
+    "pali_equivalent": "อุปคมฺม / -สฺสติ",
+    "thai_meaning": "กำลังจะ...แล้ว",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လား",
+    "category": "นิบาต (คำถามแบบ Yes/No)",
+    "pali_equivalent": "กึ / นุ",
+    "thai_meaning": "หรือ, ไหม",
+    "is_ambiguous": false
+  },
+  {
+    "word": "သလဲ",
+    "category": "นิบาต (คำถามแบบมีคำแสดงคำถาม)",
+    "pali_equivalent": "กึ / กถํ",
+    "thai_meaning": "อย่างไร, อะไร, ทำไม",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရအောင်",
+    "category": "วิภัตติอาขยาต (ชักชวน)",
+    "pali_equivalent": "-ม (Hortative)",
+    "thai_meaning": "เถอะ, กันเถอะ (Let's)",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပါစေ",
+    "category": "วิภัตติอาขยาต (อวยพร/ปรารถนา)",
+    "pali_equivalent": "-ตุ (Optative)",
+    "thai_meaning": "ขอจง...",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဘူး",
+    "category": "นิบาต (ลงท้ายประโยคปฏิเสธ)",
+    "pali_equivalent": "น / โน",
+    "thai_meaning": "ไม่... (ใช้คู่กับ မ- นำหน้า)",
+    "is_ambiguous": false
+  },
+  {
+    "word": "နဲ့",
+    "category": "นิบาต (ลงท้ายประโยคห้าม)",
+    "pali_equivalent": "มา / ปฏิเสธ",
+    "thai_meaning": "อย่า... (ใช้คู่กับ မ- นำหน้า)",
+    "is_ambiguous": true
+  },
+  {
+    "word": "ခံ",
+    "category": "ปัจจัยเสริมกิริยา (กรรมวาจกแบบได้รับผลกระทบ)",
+    "pali_equivalent": "อนุภวติ",
+    "thai_meaning": "ถูก... (มักใช้ในทางไม่ดี), ได้รับ",
+    "is_ambiguous": true
+  },
+  {
+    "word": "ကိုယ့်ကိုယ်ကို",
+    "category": "สัพพนาม (สะท้อนประธาน)",
+    "pali_equivalent": "อตฺตานํ / สยํ",
+    "thai_meaning": "ตนเอง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တဲ့",
+    "category": "นิบาต (อนุสสวะ/บอกเล่าจากผู้อื่น)",
+    "pali_equivalent": "กิร / อนุสฺสว",
+    "thai_meaning": "ได้ยินว่า, เขาว่ากันว่า",
+    "is_ambiguous": true
+  },
+  {
+    "word": "လို့",
+    "category": "นิบาต (สรูปะ/อ้างอิงคำพูด)",
+    "pali_equivalent": "อิติ",
+    "thai_meaning": "ว่า... (ใช้หลังคำอ้างอิงคำพูด)",
+    "is_ambiguous": true
+  },
+  {
+    "word": "ဒီ",
+    "category": "วิเสสนสัพพนาม (ใกล้)",
+    "pali_equivalent": "อิม",
+    "thai_meaning": "นี้ (ใช้ขยายนาม)",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဟို",
+    "category": "วิเสสนสัพพนาม (ไกล)",
+    "pali_equivalent": "อมุ / ต",
+    "thai_meaning": "โน้น, นั้น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ယောက်",
+    "category": "ลักษณนาม (บุคคล)",
+    "pali_equivalent": "ชน",
+    "thai_meaning": "คน (ลักษณนาม)",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကောင်",
+    "category": "ลักษณนาม (สัตว์)",
+    "pali_equivalent": "ปาณ / สตฺต",
+    "thai_meaning": "ตัว (ลักษณนามของสัตว์)",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ခု",
+    "category": "ลักษณนาม (สิ่งของทั่วไป)",
+    "pali_equivalent": "วตฺถุ / ฐาน",
+    "thai_meaning": "อัน, สิ่ง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "စောင်",
+    "category": "ลักษณนาม (สิ่งของแบน/แผ่น)",
+    "pali_equivalent": "ปตฺต",
+    "thai_meaning": "ฉบับ, ผืน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "လုံး",
+    "category": "ลักษณนาม (สิ่งของกลม)",
+    "pali_equivalent": "ปิณฺฑ / โคล",
+    "thai_meaning": "ลูก, ใบ, ก้อน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ချောင်း",
+    "category": "ลักษณนาม (สิ่งของยาว)",
+    "pali_equivalent": "ทณฺฑ",
+    "thai_meaning": "ด้าม, แท่ง, ท่อน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "တွေ",
+    "category": "ปัจจัยพหูพจน์ (ภาษาพูด)",
+    "pali_equivalent": "-โย / พหุ",
+    "thai_meaning": "ทั้งหลาย, พวก",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရဲ့",
+    "category": "วิภัตตินาม (ฉัฏฐี - ภาษาพูด)",
+    "pali_equivalent": "-ส",
+    "thai_meaning": "ของ, แห่ง",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပေါ်",
+    "category": "คำวิเศษณ์/นาม (สถานที่)",
+    "pali_equivalent": "อุปริ",
+    "thai_meaning": "บน, เหนือ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ထဲ",
+    "category": "คำวิเศษณ์/นาม (สถานที่)",
+    "pali_equivalent": "อนฺโต",
+    "thai_meaning": "ข้างใน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဘေး",
+    "category": "คำวิเศษณ์/นาม (สถานที่)",
+    "pali_equivalent": "ปสฺส",
+    "thai_meaning": "ข้างๆ, ริม",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကတော့",
+    "category": "นิบาต (เน้นประธาน/เปรียบเทียบ)",
+    "pali_equivalent": "ปน (Contrastive Topic)",
+    "thai_meaning": "ส่วนว่า, สำหรับ...นั้น",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ပဲ",
+    "category": "นิบาต (อวธารณะ/เจาะจง)",
+    "pali_equivalent": "เอว (Exclusive Focus)",
+    "thai_meaning": "เท่านั้น, นั่นแหละ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ခင်ဗျ",
+    "category": "นิบาต (แสดงความเคารพของชาย)",
+    "pali_equivalent": "ภนฺเต / โภ",
+    "thai_meaning": "ครับ, ขอรับ",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ရှင်",
+    "category": "นิบาต (แสดงความเคารพของหญิง)",
+    "pali_equivalent": "อยฺเย",
+    "thai_meaning": "ค่ะ, เจ้าค่ะ",
+    "is_ambiguous": true
+  },
+  {
+    "word": "လေ",
+    "category": "นิบาต (เน้นความหมายภาษาเขียน)",
+    "pali_equivalent": "วต",
+    "thai_meaning": "แล, หนอ (ใช้ประกอบกิริยาในวรรณกรรม)",
+    "is_ambiguous": true
+  },
+  {
+    "word": "သုံးဆောင်",
+    "category": "กิริยา (ราชาศัพท์/ศัพท์ยกย่อง)",
+    "pali_equivalent": "ภุญฺชติ / ปริภุญฺชติ",
+    "thai_meaning": "รับประทาน, ฉัน (ใช้กับผู้ใหญ่/พระ)",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ကြွ",
+    "category": "กิริยา (ราชาศัพท์/ศัพท์ยกย่อง)",
+    "pali_equivalent": "คจฺฉติ / อาคจฺฉติ",
+    "thai_meaning": "เสด็จไป, เสด็จมา",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဘာ",
+    "category": "ปุจฉาสัพพนาม",
+    "pali_equivalent": "กึ",
+    "thai_meaning": "อะไร",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ဒါ",
+    "category": "สัพพนามชี้เฉพาะ (ใกล้)",
+    "pali_equivalent": "อิทํ",
+    "thai_meaning": "สิ่งนี้",
+    "is_ambiguous": false
+  },
+  {
+    "word": "အိမ်",
+    "category": "นาม",
+    "pali_equivalent": "เคห / ฆร",
+    "thai_meaning": "บ้าน, เรือน",
+    "is_ambiguous": false
+  },
+  {
+    "word": "ထမင်း",
+    "category": "นาม",
+    "pali_equivalent": "โอทน / ภตฺต",
+    "thai_meaning": "ข้าว, อาหาร",
+    "is_ambiguous": false
+  },
+  {
+    "word": "စာအုပ်",
+    "category": "นาม",
+    "pali_equivalent": "โปตฺถก",
+    "thai_meaning": "หนังสือ, คัมภีร์",
+    "is_ambiguous": false
+  }
+
+
+];
+// แปลง Unicode normalize
+function normalizeStr(str) {
+    return str ? str.normalize('NFC').trim() : '';
+}
+
+// Map โครงสร้างข้อมูล
+const grammarData = rawJSONData.map(item => {
+    let colorClass = "cat-ambiguous";
+    
+    if (item.is_ambiguous) colorClass = "cat-ambiguous";
+    else if (item.category.includes("วิภัตติ")) colorClass = "cat-vibhatti";
+    else if (item.category.includes("อาขยาต") || item.category.includes("ธาตุ")) colorClass = "cat-akhyata";
+    else if (item.category.includes("กิตก์")) colorClass = "cat-kit";
+    else if (item.category.includes("นิบาต")) colorClass = "cat-nipata";
+    else if (item.category.includes("คุณนาม") || item.category.includes("สัพพนาม")) colorClass = "cat-adjective";
+    else if (item.category.includes("ราชาศัพท์")) colorClass = "cat-honor";
+
+    const fullMeaning = item.pali_equivalent && item.pali_equivalent !== "-"
+        ? `<span style="color:#2563eb; font-weight:600;">[บาลี: ${item.pali_equivalent}]</span><br>${item.thai_meaning}` 
+        : item.thai_meaning;
+
+    return {
+        word: normalizeStr(item.word),
+        category: item.category,
+        meaning: fullMeaning,
+        class: colorClass
+    };
+});
+
+const tableBody = document.getElementById('suffixTableBody');
+const dataMap = {};
+
+// เรียงลำดับจากคำยาวไปสั้น เพื่อให้ Match คำยาวก่อนเสมอ (Strict Longest Match)
+const sortedGrammar = [...grammarData].sort((a, b) => b.word.length - a.word.length);
+
+sortedGrammar.forEach((item, index) => {
+    dataMap[item.word] = { ...item, id: encodeURIComponent(item.word + index) }; 
+    
+    const row = document.createElement('tr');
+    row.id = `row-${dataMap[item.word].id}`;
+    row.innerHTML = `
+        <td style="font-size: 17px; font-weight: 500;">
+            <span class="${item.class}" style="padding: 4px 8px; border-radius: 6px;">${item.word}</span>
+        </td>
+        <td style="color: #64748b; font-size: 14px;">${item.category}</td>
+        <td style="line-height: 1.5;">${item.meaning}</td>
+    `;
+    tableBody.appendChild(row);
+});
+
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * 💡 MYANMAR ADVANCED TOKENIZER ENGINE
+ * แบ่งประโยคพม่าออกเป็นคำและพยางค์อย่างถูกต้องตามมาตรฐาน Unicode โดยไม่ทำให้ตัวสะกดหลุด
+ */
+function tokenizeAndHighlight(text) {
+    let normalizedInput = normalizeStr(text);
+    if (!normalizedInput) return "<span style='color:#94a3b8;'>โปรดระบุประโยคบาลี-พม่า</span>";
+
+    let resultHTML = "";
+    let currentIndex = 0;
+
+    while (currentIndex < normalizedInput.length) {
+        let matched = false;
+
+        // ค้นหาแบบ Longest-Match-First ในตำแหน่งปัจจุบัน
+        for (let item of sortedGrammar) {
+            let targetWord = item.word;
+            if (normalizedInput.startsWith(targetWord, currentIndex)) {
+                // ตรวจสอบว่าพยางค์ถัดไปถูกตัดกึ่งกลางวรรณยุกต์หรือไม่
+                let nextCharIndex = currentIndex + targetWord.length;
+                let nextChar = normalizedInput.charAt(nextCharIndex);
+                
+                // ถ้ารหัสถัดไปเป็นสระ/ตัวสะกดตามหลัง (เช่น ်, ိ, ု, း ฯลฯ) แสดงว่าตัดกลางพยางค์ ให้ข้ามคำนี้ไป
+                if (nextChar && /[\u102B-\u103E\u1056-\u1059\u103A]/.test(nextChar)) {
+                    continue;
+                }
+
+                // เจอคำสมบูรณ์ Highlight ได้
+                let matchedObj = dataMap[targetWord];
+                resultHTML += `<span class="highlight ${matchedObj.class}" onclick="scrollToRow('${matchedObj.id}')">${targetWord}</span>`;
+                currentIndex += targetWord.length;
+                matched = true;
+                break;
+            }
+        }
+
+        // ถ้าไม่มีคำไหน Match ในตำแหน่งนี้ ให้ขยับทีละ 1 ตัวอักษร
+        if (!matched) {
+            resultHTML += normalizedInput.charAt(currentIndex);
+            currentIndex++;
+        }
+    }
+
+    return resultHTML;
+}
+
+function processSentence() {
+    let rawInput = document.getElementById('myanmarInput').value;
+    const previewArea = document.getElementById('previewArea');
+    
+    previewArea.innerHTML = tokenizeAndHighlight(rawInput);
+    document.querySelectorAll('tr').forEach(tr => tr.classList.remove('active-row'));
+}
+
+function scrollToRow(id) {
+    const targetRow = document.getElementById(`row-${id}`);
+    if (targetRow) {
+        document.querySelectorAll('tr').forEach(tr => tr.classList.remove('active-row'));
+        targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetRow.classList.add('active-row');
+    }
+}
+
+document.getElementById('myanmarInput').addEventListener('input', processSentence);
+processSentence();
+</script>
+
+</body>
+</html>
